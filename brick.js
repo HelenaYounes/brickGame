@@ -3,6 +3,7 @@
 
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
+var bricks = [];
 var ballX = 200
 var ballY = 100;
 var paddleX = canvas.width/2;
@@ -11,24 +12,18 @@ var paddleWidth = 100;
 var paddleHeight = 20;
 var col = 4;
 var row = 14;
+var brickConfig = {
+  width: 50,
+  height: 20,
+  padding: 4,
+}
+var velX =2;
+var velY =2;
 var brickX = 0;
 var brickY = 0;
-var brickLength =50;
-var brickHeight = 20;
-var brickPadding = 4;
-var veloX = 2;
-var veloY = 2;
 var right = false;
 var left = false;
-var brick = [];
-for ( i = 0; i < col; i++) {
-  brick[i] = [];
-  for (j = 0; j <row; j++) {
-    brick[i][j] = {
-      x: 0, y: 0
-    };
-  }
-}
+
 
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -40,33 +35,64 @@ function draw(){
   bouncePaddle();
 }
 function drawWall(){
-  for ( i = 0; i < col; i++) {
-    drawCol();
+  for ( i = 0; i < bricks.length; i++) {
+    drawBrick(bricks[i]);
   }
 }
 
-function drawRow(c){
-  for ( i = 0; i <= row; i++) {
-    drawBrick();
-    brickX += brickLength + brickPadding;
-  }
-  brickX = 0;
-}
-
-function drawCol(){
-  for ( c = 0; c <= col; c++) {
-    drawRow();
-    brickY += brickHeight + brickPadding;
-  }
-  brickY = 0;
-}
-
-function drawBrick(){
+function drawBrick(brick){
   ctx.beginPath();
   ctx.fillStyle = "#FF0000";
-  ctx.fillRect(brickX, brickY, brickLength, brickHeight);
+  ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
   ctx.closePath();
 }
+function createWall() {
+  createPyramidWall(4);
+}
+
+function getRowWidth(numBricks){
+  return totalBrickWidth(numBricks) + totalBrickPadding(numBricks);
+}
+
+function totalBrickWidth(numBricks){
+  return brickConfig.width * numBricks;
+}
+
+function totalBrickPadding(numBricks){
+  return brickConfig.padding * (numBricks - 1);
+}
+
+function getStartX(numBricks) {
+  var totalWallWidth = getRowWidth(numBricks);
+  return ((canvas.width - totalWallWidth) / 2) - (brickConfig.width/2);
+}
+
+function getStartY(numRow){
+  return (brickConfig.height + brickConfig.padding) * numRow;
+}
+
+function createCenteredRow(startY, numBricks){
+  var currentX = getStartX( numBricks);
+  for (var i = 0; i < numBricks; i++) {
+    var brick = {
+      x: currentX,
+      y: startY,
+      width: brickConfig.width,
+      height: brickConfig.height,
+    };
+    bricks.push(brick);
+    currentX += brick.width + brickConfig.padding;
+  }
+}
+
+function createPyramidWall( height) {
+  for (var row = 0; row < height; row++) {
+    var numBricks = height - row;
+    var startY = getStartY(row);
+    createCenteredRow(startY, numBricks);
+  }
+}
+
 
 function drawPaddle(){
   ctx.beginPath();
@@ -84,16 +110,16 @@ function drawBall(){
   ctx.fillStyle = "#0095DD";
   ctx.fill();
   ctx.closePath();
-  ballX += veloX;
-  ballY += veloY;
+  ballX += velX;
+  ballY += velY;
 }
 
 function bounceWall(){
   if (ballX >= canvas.width || ballX <= 0){
-    veloX =  - veloX;
+    velX =  - velX;
   }
   else if (ballY <= 0){
-    veloY =  - veloY;
+    velY =  - velY;
   }
 }
 
@@ -138,24 +164,27 @@ function checkBounds(x){
 function bouncePaddle(){
   if (ballX >= paddleX && ballX < paddleX + paddleWidth/2){
     if (ballY >= paddleY && ballY <= paddleY + paddleHeight) {
-      veloX =  - veloX - 2;
-      veloY =  - veloY;
+      velX =  - velX - 2;
+      velY =  - velY;
     }
   }
   else if (ballX > paddleX + paddleWidth/2  && ballX < paddleX + paddleWidth){
     if (ballY >= paddleY && ballY <= paddleY + paddleHeight) {
-      veloX = - veloX + 2;
-      veloY =  - veloY;
+      velX = - velX + 2;
+      velY =  - velY;
     }
   }
   else if (ballX == paddleX + paddleWidth/2  && ballX == paddleX + paddleWidth){
     if (ballY >= paddleY && ballY <= paddleY + paddleHeight) {
-      veloX =  - veloX ;
-      veloY =  - veloY;
+      velX =  - velX ;
+      velY =  - velY;
     }
   }
 }
 
+
 window.addEventListener('keydown', keyDown, false);
 window.addEventListener('keyup', keyUp, false);
+
+createWall();
 setInterval(draw,5);
